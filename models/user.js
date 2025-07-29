@@ -18,6 +18,10 @@ const userSchema = new mongoose.Schema({
             type:Number,
         }
     },
+    isTrackingOn: {
+        type: Boolean,
+        default: false
+    },
     uuid:{
         type:String,
         required:true,

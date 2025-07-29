@@ -10,6 +10,7 @@ const redisClient = require("./redisClient");
 
 require('./jobs/cron-jobs')
 const {createUpdateLocationHandler} = require("./controllers/location");
+const LocationRouterHandler = require("./routes/location");
 
 connectToDatabase(process.env.MONGODB_URI);
 
@@ -35,18 +36,33 @@ io.on('connection', (socket) => {
     //    console.log(` 👥 User joined room : ${roomCode}`);
     // });
     socket.on('join-room', async (roomCode) => {
-        socket.join(roomCode);
-        console.log(` 👥 User joined room : ${roomCode}`);
+        try {
+            socket.join(roomCode);
+            console.log(`👥 User joined room : ${roomCode}`);
 
-        // Fetch last known location from Redis
-        const location = await redisClient.get(`location:${roomCode}`);
-        if (location) {
-            socket.emit("receive-location", {
-                userId: roomCode,
-                location: JSON.parse(location)
-            });
+            // Fetch last known location from Redis
+            const location = await redisClient.get(`location:${roomCode}`);
+            const tracking = await redisClient.get(`tracking:${roomCode}`);
+
+            console.log(`📦 Redis location: ${location}`);
+            console.log(`🧭 Redis tracking: ${tracking}`);
+
+            if (location) {
+                socket.emit("receive-location", {
+                    userId: roomCode,
+                    location: JSON.parse(location),
+                    tracking: tracking === "true"
+                });
+                console.log(`📡 Sent last known location to ${socket.id}`);
+            } else {
+                console.log(`⚠️ No cached location found for room: ${roomCode}`);
+            }
+
+        } catch (err) {
+            console.error(`🚨 Error in join-room for ${roomCode}:`, err.message);
         }
     });
+
 
     //disconnect
     socket.on('disconnect', () => {
@@ -55,7 +71,7 @@ io.on('connection', (socket) => {
 });
 
 //Inject 'io' to our location router
-const locationRouter = createUpdateLocationHandler(io);
+const locationRouter = LocationRouterHandler(io);
 app.use('/user', userRouter);
 app.use('/location',locationRouter)
 

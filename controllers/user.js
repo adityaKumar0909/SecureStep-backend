@@ -1,15 +1,30 @@
 const { customAlphabet } = require('nanoid');
 const User = require("../models/user");
 const {json} = require("express");
+const { uniqueNamesGenerator, adjectives, animals } = require('unique-names-generator');
+
+
+function generateUID() {
+ const name = uniqueNamesGenerator({
+  dictionaries: [adjectives, animals],
+  separator: '',
+  style: 'lowerCase',
+ });
+
+ const number = String(Math.floor(Math.random() * 100)).padStart(2, '0'); // 00-99
+ return `${name}${number}`; // e.g. "sillypanda09"
+}
 
 // Only letters + numbers (uppercase + lowercase)
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
-const generateUID = customAlphabet(alphabet, 8);
+// const newUID = generateUID();
 
 async function getUID(req, res) {
  console.log("We got a request asking for new UID allocation");
+
  const uniqueID = generateUID();
+ console.log(`dispatched ${uniqueID}`);
  return res.status(201).json({ id: uniqueID });
 }
 
@@ -53,44 +68,57 @@ async function handleEmergencyContacts(req,res){
 
 }
 
-async function handleUpdateUserProfile(req,res){
- console.log("We got a new req for user profile update");
- if(!req.body.name || !req.body.email || !req.body.emergencyContacts ||!req.body.uuid) return res.status(400).json({msg:"Missing fields"});
- let {uuid,name , email , emergencyContacts} = req.body;
- name  = name.trim();
- email = email.trim();
- console.log(uuid,name,email,emergencyContacts);
- try{
+async function handleUpdateUserProfile(req, res) {
+ console.log("👤 We got a new req for user profile update");
 
-  const user = await User.findOne({uuid});
-  //User not seen before in database, create this profile
-  if(!user){
+ let { uuid, name, email, emergencyContacts } = req.body;
+
+ // Basic validation
+ if (!name || !email || !emergencyContacts) {
+  console.warn("⚠️ Missing fields in user profile update");
+  return res.status(400).json({ msg: "Missing fields" });
+ }
+
+ // Clean inputs
+ name = name.trim();
+ email = email.trim();
+ uuid = uuid?.trim() || generateUID(); // <-- Generate UUID if not provided
+
+ console.log(`🔑 UUID: ${uuid}`);
+ console.log(`📧 Email: ${email}`);
+ console.log(`📞 Contacts: ${JSON.stringify(emergencyContacts)}`);
+
+ try {
+  let user = await User.findOne({ uuid });
+
+  if (!user) {
+   // New user
    const newUser = new User({
-    uuid:uuid,
-    name:name,
-    email:email,
-    emergencyContacts:emergencyContacts,
+    uuid,
+    name,
+    email,
+    emergencyContacts,
    });
 
    await newUser.save();
    console.log("🆕 New user created");
-   return res.status(201).json({ msg: "User created successfully" });
-  }else {
-   // If user exists, update the info
+   console.log(`🆕 with UUID: ${uuid}`);
+   return res.status(201).json({ msg: "User created successfully", uuid });
+  } else {
+   // Existing user
    user.name = name;
    user.email = email;
    user.emergencyContacts = emergencyContacts;
 
    await user.save();
    console.log("♻️ Existing user updated");
-   return res.status(200).json({ msg: "User updated successfully" });
+   return res.status(200).json({ msg: "User updated successfully", uuid });
   }
-
-
- }catch (err) {
+ } catch (err) {
   console.error("❌ Error in user profile update:", err);
   return res.status(500).json({ msg: "Internal server error" });
  }
 }
+
 
 module.exports = { getUID , setCoordinates , createNewUser,handleEmergencyContacts,handleUpdateUserProfile};

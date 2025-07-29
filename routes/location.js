@@ -1,12 +1,15 @@
 const express = require('express');
 const User = require("../models/user");
-const {handleUpdateLocation, createUpdateLocationHandler} = require("../controllers/location");
+const {handleStopUpdates, createUpdateLocationHandler, createStopUpdatesHandler} = require("../controllers/location");
 
+const Router = express.Router();
 
-function createLocationRouter(io){
+function LocationRouterHandler(io){
     const Router = express.Router();
-    const handleUpdateLocationIO = createUpdateLocationHandler(io);
-    Router.post('/location-update',handleUpdateLocationIO);
+    Router.post('/location-update',createUpdateLocationHandler(io));
+    Router.post('/stop-tracking',createStopUpdatesHandler(io));
     return Router;
 }
-module.exports = createLocationRouter;
+
+
+module.exports = LocationRouterHandler;
