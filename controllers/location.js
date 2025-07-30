@@ -52,9 +52,9 @@ function createStopUpdatesHandler(io) {
         try{
             const lastKnownLocation = await redisClient.get(`location:${uuid}`);
 
-            //Clean all data of that user from redis
-            await redisClient.del(`tracking:${uuid}`);
-            await redisClient.del(`location:${uuid}`);
+            // //Clean all data of that user from redis
+            // await redisClient.del(`tracking:${uuid}`);
+            // await redisClient.del(`location:${uuid}`);
             await redisClient.sRem(`location:pendingUsers`,uuid);
 
             //Tell the dashboard that user is offline now

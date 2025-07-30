@@ -30,11 +30,6 @@ const io = new Server(server,{
 io.on('connection', (socket) => {
     console.log(`🧩 User connected : ${socket.id}`);
 
-    // //Join room
-    // socket.on('join-room',(roomCode)=>{
-    //    socket.join(roomCode);
-    //    console.log(` 👥 User joined room : ${roomCode}`);
-    // });
     socket.on('join-room', async (roomCode) => {
         try {
             socket.join(roomCode);
