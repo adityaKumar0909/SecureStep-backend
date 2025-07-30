@@ -69,6 +69,7 @@ io.on('connection', (socket) => {
 const locationRouter = LocationRouterHandler(io);
 app.use('/user', userRouter);
 app.use('/location',locationRouter)
+app.use('/ping', (req, res) => res.status(200).send('pong'));
 
 server.listen(PORT, "0.0.0.0", () => {
     console.log(`✅ Server + Socket.IO running at port ${PORT}`);
