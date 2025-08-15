@@ -2,6 +2,7 @@ const { customAlphabet } = require('nanoid');
 const User = require("../models/user");
 const {json} = require("express");
 const { uniqueNamesGenerator, adjectives, animals } = require('unique-names-generator');
+const sendEmail = require("../utils/sendMail");
 
 
 function generateUID() {
@@ -119,6 +120,32 @@ async function handleUpdateUserProfile(req, res) {
   return res.status(500).json({ msg: "Internal server error" });
  }
 }
+async function sendAlerts(req,res){
+ 
+ if(req.body.uuid) return res.status(400).json({msg:"Missing fields"});
+ //See if a user exists
+ try {
+  const user = User.findOne({uuid: req.body.uuid});
+  if (!user) return res.status(404).json({msg: "User not found"});
+  //See if emergency contacts exist for that user
+  if (!user.emergencyContacts.length) {
+   console.log("No emergency contacts found for this user.");
+   return res.status(403).json({msg: "No emergency contacts found for this user."});
+  }
+
+  for (const email of user.emergencyContacts) {
+   sendEmail(email, "Emergency Alert !", `Our app just triggered an emergency alert for you. Please check on ${user.name}.\n
+            You can track them on your website https://secure-step-frontend.vercel.app with the tracking code ${req.body.uuid}`);
+  }
+
+  return res.status(200).json({msg:"success"});
+
+ }
+ catch(err){
+  return res.status(500).json({msg:"Internal server error"});
+ }
 
 
-module.exports = { getUID , setCoordinates , createNewUser,handleEmergencyContacts,handleUpdateUserProfile};
+}
+
+module.exports = { getUID , setCoordinates , createNewUser,handleEmergencyContacts,handleUpdateUserProfile,sendAlerts};
