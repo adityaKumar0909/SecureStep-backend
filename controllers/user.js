@@ -125,7 +125,7 @@ async function sendAlerts(req,res){
  if(!req.body.uuid) return res.status(400).json({msg:"Missing fields"});
  //See if a user exists
  try {
-  const user = User.findOne({uuid: req.body.uuid});
+  const user = await User.findOne({uuid: req.body.uuid});
   if (!user) return res.status(404).json({msg: "User not found"});
   //See if emergency contacts exist for that user
   if (!user.emergencyContacts.length) {
