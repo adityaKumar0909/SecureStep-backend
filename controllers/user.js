@@ -134,8 +134,8 @@ async function sendAlerts(req,res){
   }
 
   for (const email of user.emergencyContacts) {
-   await sendEmail(email, "Emergency Alert !", `Our app just triggered an emergency alert for you. Please check on ${user.name}.\n
-            You can track them on your website https://secure-step-frontend.vercel.app with the tracking code ${req.body.uuid}`);
+   await sendEmail(email, "Emergency Alert !", `Our app just triggered an emergency alert for you. Please check on ${user.name}.
+            You can track them on your website https://secure-step-frontend.vercel.app with the tracking code :\n ${req.body.uuid}`);
   }
 
   return res.status(200).json({msg:"success"});
